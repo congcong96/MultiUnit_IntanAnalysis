@@ -1,6 +1,6 @@
 sessions = dir('E:\Congcong\Documents\emsemble_thalamus\*CH');
+%%
 savefolder = 'E:\Congcong\Documents\emsemble_thalamus\figure\multiunit\summary';
-
 stimfolder = 'E:\Congcong\Documents\stimulus\thalamus';
 fra10stim = 'freq_resp_area_stimulus_flo500Hz_fhi32000Hz_nfreq21_natten8_nreps10_fs96000_param';
 fra10params = load(fullfile(stimfolder,fra10stim));
@@ -21,7 +21,7 @@ for ii = 1:length(sessions)
         
         dmrfolder = dir(sprintf('site%d_%dum*_dmr_*', site, depth));
         dmrfile = dir(fullfile(dmrfolder.folder, dmrfolder.name, '*-strf.mat'));
-        load(fullfile(dmrfile.folder, dmrfile.name), 'strf')
+        load(fullfile(dmrfile.folder, dmrfile.name), 'strf', 'trigger')
         
         dmrrepfolder = dir(sprintf('site%d_%dum*_dmrrep_*', site, depth));
         dmrrepfile = dir(fullfile(dmrrepfolder.folder, dmrrepfolder.name, '*-raster.mat'));
@@ -33,7 +33,7 @@ for ii = 1:length(sessions)
         rasterfile = dir('*-raster.mat');
         load(rasterfile.name, 'raster')
         
-        % order raster to mach the order of channels in thresh
+        % order raster to match the order of channels in thresh
         if length(raster) == 128 && raster(1).chan == 0
             f = cellfun(@(x) strcmp(x, thresh(1).probe), {raster.probe});
             rastertmp = raster(f);
@@ -58,11 +58,26 @@ for ii = 1:length(sessions)
             raster(1:64) = rastertmp;
             strf(1:64) = strftmp;
             dmrraster(1:64) = dmrrastertmp;
-        elseif raster(1).chan == 0
-            chanidx = [thresh.chan]+1;
-            raster = raster(chanidx);
-            strf = strf(chanidx);
-            dmrraster = dmrraster(chanidx);
+        else 
+            chanidx = [1:64; thresh.chan]';
+            chanidx = sortrows(chanidx, 2);
+            rasteridx = [1:64; raster.chan]';
+            rasteridx = sortrows(rasteridx, 2);
+            rasteridx = [chanidx(:,1), rasteridx(:,1)];
+            rasteridx = sortrows(rasteridx, 1);
+            raster = raster(rasteridx(:,2));
+            
+            strfidx = [1:64; strf.chan]';
+            strfidx = sortrows(strfidx, 2);
+            strfidx = [chanidx(:,1), strfidx(:,1)];
+            strfidx = sortrows(strfidx, 1);
+            strf = strf(strfidx(:,2));
+            
+            dmrrasteridx = [1:64;  dmrraster.chan]';
+            dmrrasteridx = sortrows( dmrrasteridx, 2);
+            dmrrasteridx = [chanidx(:,1), dmrrasteridx(:,1)];
+            dmrrasteridx = sortrows(dmrrasteridx, 1);
+            dmrraster = dmrraster(dmrrasteridx(:,2));
         end
         
         fraproperties = [];
@@ -82,7 +97,7 @@ for ii = 1:length(sessions)
         save(fra10file.name, 'thresh', 'fraproperties', 'raster', '-append')
         
         %% strf properties
-        dur = 60*15; 
+        dur = trigger(end)-trigger(1)/20000; 
         rtf = strf_parameters(strf, dur);
         taxis = strf(1).taxis;
         faxis = strf(1).faxis;

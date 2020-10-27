@@ -19,6 +19,10 @@ function [tc, fraproperties, psth, peakdelay, rpw, n0] = fra_properties(spk, ras
 %   fr5ms > mean(psth(201:300)) + 3 * std(psth(201:300))
 %   for significant psth, psth is smoothed and continuous significant time
 %   bins around the peak is used as response window (rpw)
+% 
+% First, the significance of PSTH is determined by signed rank test of the
+% number of spikes during sound and before sound
+% 
 % adapted from FRA_properties_NH, 12/17/2019
 % Congcong, 12/20/2019
 % set variables
@@ -32,7 +36,8 @@ allTimes = [];
 edges = trange(1):binsize:trange(2);
 lim = [0 50];
 
-% to determine the significance of psth
+% ----------------to determine the significance o psth (signed-rank test, p=0.01)--------------------
+spkcount = zeros(size(raster.rastermat,1),2);
 for ii = 1:size(raster.rastermat,1)
     eachTimes = raster.rastermat{ii};
     eachTimes = eachTimes(:);%spike time to each tone (stimulus presentation + silence)
@@ -49,6 +54,7 @@ end
 [psth,~] = histcounts(allTimes,edges);
 n0 = length(allTimes); %number of spikes
 
+% --------------------get significant window-------------------------------
 % if psth is significant, get time window with significant increase in firing rate
 % smooth setting: 5 bins average
 if significance
@@ -56,27 +62,32 @@ if significance
     rest = mean(psth_smooth(201:300));
     sigma = std(psth_smooth(201:300));
     sigbins = find(psth_smooth > rest + 3 * sigma);
-    [~, peak_idx] = max(psth_smooth); %index of peak in psth
-    peakdelay = peak_idx;
-    peak_idx = find(sigbins == peak_idx); %index of peak in sigbins
-    ii = peak_idx;
-    while ii > 1
-        if sigbins(ii ) - sigbins(ii - 1) == 1
-            ii = ii - 1;
-        else
-            break
+    if ~isempty(sigbins)
+        [~, peak_idx] = max(psth_smooth); %index of peak in psth
+        peakdelay = peak_idx;
+        peak_idx = find(sigbins == peak_idx); %index of peak in sigbins
+        ii = peak_idx;
+        while ii > 1
+            if sigbins(ii ) - sigbins(ii - 1) == 1
+                ii = ii - 1;
+            else
+                break
+            end
         end
-    end
-    rpw(1) = sigbins(ii)-1; %start of significant increase in firing rate in two continuous time bins
-    ii = peak_idx;
-    while ii < length(sigbins)
-        if sigbins(ii + 1) - sigbins(ii) == 1
-            ii = ii+1;
-        else
-            break
+        rpw(1) = sigbins(ii)-1; %start of significant increase in firing rate in two continuous time bins
+        ii = peak_idx;
+        while ii < length(sigbins)
+            if sigbins(ii + 1) - sigbins(ii) == 1
+                ii = ii+1;
+            else
+                break
+            end
         end
+        rpw(2) = sigbins(ii); %end of significant increase in firing rate in two continuous time bins
+    else
+        peakdelay = NaN;
+        rpw = [0 50];
     end
-    rpw(2) = sigbins(ii); %end of significant increase in firing rate in two continuous time bins
 else
     peakdelay = NaN;
     rpw = [0 50];
@@ -84,32 +95,31 @@ end
 
 %calculate tuning curve and decide tc boundary
 tc = calculate_tuning_curve(spk,trigger,params,rpw);
-ntc = calculate_tuning_curve(spk,trigger,params,[300-diff(rpw)+1, 300]); %get null fra with spontaneous activity
+ntc = calculate_tuning_curve(spk,trigger,params,[300-diff(rpw), 300]); %get null fra with spontaneous activity
 ntc = ntc.tcmat(:);
 base = mean(ntc) + 3*std(ntc);
 
-spikes = smoothmat(tc.tcmat, 2);
-spikes = smoothmat(spikes>base);
+spikes = tc.tcmat;
+spikes(spikes < base) = 0;
+spikes = smoothmat(spikes, 2);
 
 bounds=(nlevels+1)*ones(nfreqs, 1);
 %calculate a threshold based on null tc calculated with spontaneous activity.
 for ii=1:nfreqs
     for jj=1:nlevels
         if spikes(jj, ii)
-            if jj<nlevels-3 && spikes(jj+1, ii) && spikes(jj+2, ii) && spikes(jj+3, ii) && spikes(jj+4, ii)
-                bounds(ii) = jj+1;
-                break
-            elseif jj == nlevels-3 && spikes(jj+1, ii) && spikes(jj+2, ii) && spikes(jj+3, ii)
-                bounds(ii) = jj+1;
-                break
-            elseif jj == nlevels-2 && spikes(jj+1, ii) && spikes(jj+2, ii)
-                bounds(ii) = jj+1;
-                break
-            elseif jj == nlevels-1 && spikes(jj+1, ii)
-                bounds(ii) = nlevels;
-                break
+            if (jj<nlevels-3 && spikes(jj+1, ii) && spikes(jj+2, ii) && spikes(jj+3, ii) && spikes(jj+4, ii))||...
+               (jj == nlevels-3 && spikes(jj+1, ii) && spikes(jj+2, ii) && spikes(jj+3, ii)) ||...
+               (jj == nlevels-2 && spikes(jj+1, ii) && spikes(jj+2, ii) )||...
+               (jj == nlevels-1 && spikes(jj+1, ii))
+                if ii == 1 || spikes(jj, ii-1)>0
+                    bounds(ii) = jj + 1;
+                    break
+                end
+                 
             end
         end
+        
     end
 end
 for ii=2:length(bounds)-1 % remove odd peaks
@@ -120,7 +130,8 @@ end
 
 % Call FRApropertiesCx01
 % extract fraproperties (original script is FRApropertiesTH05 from DPhil project)
-spikes = smoothmat(tc.tcmat, 2);
+%spikes = smoothmat(tc.tcmat, 2);
+spikes = tc.tcmat;
 spikes(spikes <= base) = 0;
 
 [frapropertiestmp]=FRApropertiesCx01(bounds,freqs,spikes,levels); %,fileName,channel,idx_window)
