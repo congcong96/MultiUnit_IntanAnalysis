@@ -1,4 +1,4 @@
-function [BF, BW_max, BW_min, Latency,Q, confirm] = calc_bf_bw_latency(filter,taxis,faxis,manual, bw_crit)
+function [BF, BW_max, BW_min, Latency,Q, tw, confirm] = calc_bf_bw_latency(filter,taxis,faxis,manual, bw_crit)
 % calculate BF, BW, Latency for a filter (STA, MID1, MID")
 % INPUTS
 % filter: spectrotemporal receptive field
@@ -27,25 +27,31 @@ if manual
     axis xy
 end
 
-M = max(max(abs(filter)));
-if M < mean(filter(:)) + 3* std(filter(:))
-    [confirm, BF, BW_max, BW_min, Latency,Q] = rejection(manual);
-    return
-end
+% peakstim = max(max(abs(filter(:, 101:301))));
+% peakspon = max(max(abs(filter(:, 1:100))));
+% %peakbefore spike is leass than 1.5 * peak after spike
+% if peakspon > 0 && peakstim/peakspon < 1.5
+%     [confirm, BF, BW_max, BW_min, Latency,Q, tw] = rejection(manual);
+%     return
+% end
+
 
 faxislog = log2(faxis ./ min(faxis));  % change into log scale
-% Upsample taxis, faxislog
-faxislogu = linspace(min(faxislog),max(faxislog),1000); % use log step for faxislog
-[BF, fidx1, fidx2, idxBF] = spectral_response(filter, [1 size(filter,2)], faxis, faxislog, faxislogu, bw_crit);
+faxislogu = linspace(min(faxislog),max(faxislog),1000); % up sample
+[BF, fidx1, fidx2, idxBF] = spectral_response(filter, [1, size(filter,2)], faxis, faxislog, faxislogu, bw_crit);
 
 %tVec = sum(fliplr(sta),1);
-taxisu = linspace(min(taxis),max(taxis),1000);
 fidx1d = round(fidx1/1000*size(filter,1));
 fidx2d = round(fidx2/1000*size(filter,1));
+if fidx1d == 316 || fidx2d == 1
+    [confirm, BF, BW_max, BW_min, Latency,  Q, tw] = rejection(manual);
+    return
+end
 if fidx1d == 0
     fidx1d = 1;
 end
-[Latency, tidx1, tidx2, idxLatency]= temporal_response(filter, [fidx1d fidx2d], taxis, taxisu, bw_crit);
+taxisu = linspace(min(taxis),max(taxis),1000);% upsample taxis
+[Latency, tidx1, tidx2, idxLatency]= temporal_response(filter, [fidx1d, fidx2d], taxis, taxisu, bw_crit);
 
 
 tidx1d = round(tidx1/1000*size(filter,2));
@@ -77,11 +83,12 @@ end
 BW_max = (min(faxis)*2^faxislogu(fidx2))/1000; %kHz
 BW_min = (min(faxis)*2^faxislogu(fidx1))/1000; %kHz
 if BW_max/BW_min < 2^0.095 %noise when bw is smaller than half modulation cycle
-    [confirm, BF, BW_max, BW_min, Latency,  Q] = rejection(manual);
+    [confirm, BF, BW_max, BW_min, Latency,  Q, tw] = rejection(manual);
     return
 end
-if Latency <= 0 || Latency >= 50 || taxisu(tidx2) - taxisu(tidx1) < 0.0038
-    [confirm, BF, BW_max, BW_min, Latency,  Q] = rejection(manual);
+tw =  [taxisu(tidx1), taxisu(tidx2)];
+if Latency <= 0 || Latency >= 100 || diff(tw) < 0.0038
+    [confirm, BF, BW_max, BW_min, Latency,  Q, tw] = rejection(manual);
     return
 end
 
@@ -106,9 +113,9 @@ end
 end
 
 function [BF, idx1, idx2, idxBF]= spectral_response(filter, flim, faxis,faxislog, faxislogu, bw_crit)
-    fVec = sum(filter(:, flim(1):flim(2)), 2);
+    fVec = sum(abs(filter(:, flim(1):flim(2))), 2);
     fVecu = interp1(faxislog,fVec,faxislogu,'spline');
-    [M, idxBF] = max(abs(fVecu));
+    [M, idxBF] = max(fVecu);
     BF = (min(faxis)*2^faxislogu(idxBF))/1000; %kHz
     p1 = 1;
     p2 = 1;
@@ -139,7 +146,7 @@ function [Latency, idx1, idx2, idxLatency]= temporal_response(filter, tlim, taxi
     idx2 = idxLatency + p2 - 1;
 end
 
-function  [confirm, BF, BW_max, BW_min, Latency, Q] = rejection(manual)
+function  [confirm, BF, BW_max, BW_min, Latency, Q, tw] = rejection(manual)
     if manual 
         confirm = input('\nrejection confirm? 1=yes, 0=no: ');
     else
@@ -150,4 +157,5 @@ function  [confirm, BF, BW_max, BW_min, Latency, Q] = rejection(manual)
     BW_min = NaN;
     Latency = NaN;
     Q = NaN;
+    tw = NaN;
 end

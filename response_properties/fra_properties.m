@@ -1,4 +1,4 @@
-function [tc, fraproperties, psth, peakdelay, rpw, n0] = fra_properties(spk, raster, trigger, params)
+function [tc, fraproperties, psth, peakdelay, rpw, n0, HW] = fra_properties(spk, raster, trigger, params)
 % Inputs:
 %   spk: units from spike sorting with spiketimes in the structure
 %   raster: raster of spikes in response to pure tones
@@ -50,9 +50,29 @@ for ii = 1:size(raster.rastermat,1)
 end
 
 [~,significance] = signrank(spkcount(:,1),spkcount(:,2),'alpha', 0.01); %,'tail','right');
-
+if ~significance
+    lim = [0 30];
+    spkcount = zeros(size(raster.rastermat,1),2);
+    for ii = 1:size(raster.rastermat,1)
+        eachTimes = raster.rastermat{ii};
+        eachTimes = eachTimes(:);%spike time to each tone (stimulus presentation + silence)
+        allTimes = [allTimes; eachTimes];
+        
+        f =find(eachTimes>= lim(1) & eachTimes < lim(2));
+        spkcount(ii,1) = length(f); % number of rasterspikes during stimulus presentation
+        f =find(eachTimes>= edges(end)-lim(2) & eachTimes < edges(end) - lim(1));
+        spkcount(ii,2) = length(f); % number of spikes during silence
+    end
+    
+    [~,significance] = signrank(spkcount(:,1),spkcount(:,2),'alpha', 0.01); %,'tail','right');
+end
 [psth,~] = histcounts(allTimes,edges);
 n0 = length(allTimes); %number of spikes
+if ~significance && max(psth) > 100 && max(psth) > 3*mean(psth)
+   significance = 1;
+end
+
+
 
 % --------------------get significant window-------------------------------
 % if psth is significant, get time window with significant increase in firing rate
@@ -63,34 +83,59 @@ if significance
     sigma = std(psth_smooth(201:300));
     sigbins = find(psth_smooth > rest + 3 * sigma);
     if ~isempty(sigbins)
-        [~, peak_idx] = max(psth_smooth); %index of peak in psth
-        peakdelay = peak_idx;
-        peak_idx = find(sigbins == peak_idx); %index of peak in sigbins
-        ii = peak_idx;
-        while ii > 1
-            if sigbins(ii ) - sigbins(ii - 1) == 1
-                ii = ii - 1;
-            else
-                break
+        [peak, peak_idx] = max(psth_smooth); %index of peak in psth
+        if peak_idx > 100 || peak_idx < 3
+            peakdelay = NaN;
+            rpw = [0 50];
+            HW = NaN;
+        else
+            peakdelay = peak_idx;
+            peak_idx = find(sigbins == peak_idx); %index of peak in sigbins
+            ii = peak_idx;
+            while ii > 1
+                if sigbins(ii ) - sigbins(ii - 1) == 1
+                    ii = ii - 1;
+                else
+                    break
+                end
+            end
+            rpw(1) = sigbins(ii)-1; %start of significant increase in firing rate in two continuous time bins
+            ii = peak_idx;
+            while ii < length(sigbins)
+                if sigbins(ii + 1) - sigbins(ii) == 1
+                    ii = ii+1;
+                else
+                    break
+                end
+            end
+            rpw(2) = sigbins(ii); %end of significant increase in firing rate in two continuous time bins
+            
+            HH = (peak - mean(psth_smooth))/2 + mean(psth_smooth);
+            for ii = rpw(1)+1:peakdelay
+                if psth_smooth(ii) >= HH
+                    HW(1) = ii-1;
+                    break
+                end
+            end
+            for ii = peakdelay: rpw(2)
+                if psth_smooth(ii) <= HH
+                    HW(2) = ii-1;
+                    break
+                elseif ii == rpw(2)
+                    HW(2) = ii;
+                end
             end
         end
-        rpw(1) = sigbins(ii)-1; %start of significant increase in firing rate in two continuous time bins
-        ii = peak_idx;
-        while ii < length(sigbins)
-            if sigbins(ii + 1) - sigbins(ii) == 1
-                ii = ii+1;
-            else
-                break
-            end
-        end
-        rpw(2) = sigbins(ii); %end of significant increase in firing rate in two continuous time bins
+        
     else
         peakdelay = NaN;
         rpw = [0 50];
+        HW = NaN;
     end
 else
     peakdelay = NaN;
     rpw = [0 50];
+    HW = NaN;
 end
 
 %calculate tuning curve and decide tc boundary

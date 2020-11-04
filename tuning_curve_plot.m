@@ -19,7 +19,8 @@ end
 
 freq = tc.freq;
 %Plotting tuning curve
-newmat = smoothmat(tc.tcmat);
+%newmat = smoothmat(tc.tcmat);
+newmat = tc.tcmat;
 idx = newmat < threshold;
 newmat(idx) = 0;
 imagesc(newmat);
@@ -34,17 +35,18 @@ else
     yticklabels(75+tc.atten(2:3:8));
 end
 
+
 tc_f = sum(newmat);
 [~, I] = max(tc_f);
 bf = tc.freq(I);
-%cmap = cbrewer('seq', 'Blues', 9);
-%colormap(gca, cmap);
-colormap(gca, 'jet')
+cmap = cbrewer('seq', 'Blues', 9);
+colormap(gca, cmap);
+%colormap(gca, 'jet')
 
 if length(freq) == 21
-    text(12, 2,sprintf('%.1fk',bf/1000),'FontSize',10,'FontWeight','bold', 'Color', 'w')
+    text(12, 2,sprintf('%.1fk',bf/1000),'FontSize',10,'FontWeight','bold', 'Color', 'k')
 else
-    text(20, 2,sprintf('%.1fk',bf/1000),'FontSize',10,'FontWeight','bold', 'Color', 'w')
+    text(20, 2,sprintf('%.1fk',bf/1000),'FontSize',10,'FontWeight','bold', 'Color', 'k')
 end
 %tickpref;
 % xlabel('Frequency (kHz)');

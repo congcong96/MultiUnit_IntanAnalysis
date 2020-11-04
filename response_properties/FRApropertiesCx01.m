@@ -120,7 +120,7 @@ else
         q=(min(newbounds)+6);
     end
     if q <= length(levels)
-        [I]=find(newbounds<=q);
+        I = newbounds<=q ;
         bw=floor([cf cf]);
         while bw(1) > 1 && I(bw(1)-1) %moveleft until hit edge of I
             bw(1) = bw(1) - 1;
@@ -145,7 +145,7 @@ else
             q=(min(newbounds)+8);
         end
         if q <= length(levels)
-            [I]=find(newbounds<=q);
+            I = newbounds<=q ;
             bw=floor([cf cf]);
             while bw(1) > 1 && I(bw(1)-1) %moveleft until hit edge of I
                 bw(1) = bw(1) - 1;

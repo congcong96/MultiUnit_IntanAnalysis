@@ -37,8 +37,8 @@ function  [RI, p, corr_raster, corr_null] = calc_dmrrep_SI(rastermat, permmat)
     rep = 1000;
     corr_null = zeros(rep, 100);
     for ii = 1:rep
-        if mod(ii, 50) == 0
-            fprintf('iteratio %d/1000... \n', ii)
+        if mod(ii, 100) == 0
+            fprintf('Iteration %d/1000... \n', ii)
         end
         shift = floor(rand(50,1)*length(rastermat));
         rastermatnull =rastermat;
