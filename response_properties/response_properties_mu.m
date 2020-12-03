@@ -1,11 +1,11 @@
 sessions = dir('E:\Congcong\Documents\emsemble_thalamus\*CH');
-%%
+
 savefolder = 'E:\Congcong\Documents\emsemble_thalamus\figure\multiunit\summary';
 stimfolder = 'E:\Congcong\Documents\stimulus\thalamus';
 fra10stim = 'freq_resp_area_stimulus_flo500Hz_fhi32000Hz_nfreq21_natten8_nreps10_fs96000_param';
 fra10params = load(fullfile(stimfolder,fra10stim));
 
-%% FRA10 properties 
+%% FRA10 properties (used later for MGB subnucleus categorization)
 for ii = 1:length(sessions)
     sessionfolder = fullfile(sessions(ii).folder, sessions(ii).name);
     cd(sessionfolder)
@@ -70,10 +70,10 @@ for ii = 1:length(sessions)
     end
 end
 %% dmr properties
-%the reliability index of STRF is calculated on banshee
+% reliability index calculated on banshee
 p = 0.002;
 mdb = 40;
-for ii = 11:length(sessions)
+for ii = 1:length(sessions)
     sessionfolder = fullfile(sessions(ii).folder, sessions(ii).name);
     cd(sessionfolder)
     
@@ -92,15 +92,14 @@ for ii = 11:length(sessions)
         strf = OrderChannel(thresh, strf);
         
         % get properties of STRF features
-        taxis = strf(1).taxis(1:301);
+        taxis = strf(1).taxis;
         faxis = strf(1).faxis;
         strfproperties = [];
         for kk = 1:length(strf)
             rf = strf(kk).rfcontra;
             n0 = strf(kk).n0contra;
             rfsig = significant_strf(rf, p, n0, mdb, dur);
-            rfsig = rfsig(:,1:301);
-            [BF, BW_max, BW_min, Latency, Q, tw, confirm] = calc_bf_bw_latency(rfsig,taxis,faxis);
+            [BF, BW_max, BW_min, Latency, Q, tw, confirm] = calc_bf_bw_latency(rf,taxis,faxis, 'manual', 1, 'rfsig', rfsig);
             strfproperties(kk).chan = strf(kk).chan;
             %strfproperties(kk).probe = strf(kk).probe;
             strfproperties(kk).BF = BF;
@@ -122,7 +121,7 @@ for ii = 11:length(sessions)
     end
 end
 
-%plor MU properties
+%% plor MU properties
 p = 0.002;
 mdb = 40;
 for ii = 1:length(sessions)
@@ -158,6 +157,8 @@ for ii = 1:length(sessions)
         raster = OrderChannel(thresh, raster);
         
         fignum = 1;
+        taxis = strf(1).taxis;
+        faxis = strf(1).faxis;
         for kk = 1:length(fraproperties)
             nplot = mod(kk ,4);
             if nplot == 1
@@ -194,6 +195,7 @@ for ii = 1:length(sessions)
             rf = strf(kk).rfcontra;
             n0 = strf(kk).n0contra;
             w0 = strf(kk).w0contra;
+            
             [rfsig] = significant_strf(rf, p, n0, mdb, dur);
             h = fspecial('gaussian',3,3);
             rfsig = imfilter(rfsig, h);

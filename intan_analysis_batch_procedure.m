@@ -18,11 +18,12 @@ flag_plot = 1;
 flag_saveplot = 0;
 
 sessions = dir('E:\Congcong\Documents\emsemble_thalamus\*CH');
+savepath = 'E:\Congcong\Documents\emsemble_thalamus\figure\multiunit';
 %% data processing for each session
 % STRF =  STA*#spike/pp/T; plot rfsig
 % dmrrep: 2ms bin
 % fra: smooth[2 2]
-for session = 1:length(sessions)
+for session = 18:length(sessions)
     datafolder = ['E:\Congcong\Documents\emsemble_thalamus\', sessions(session).name];
     figpath = ['E:\Congcong\Documents\emsemble_thalamus\figure\multiunit\', sessions(session).name];
     if ~exist(figpath, 'dir')

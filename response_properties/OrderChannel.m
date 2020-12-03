@@ -2,8 +2,8 @@ function [strct2] = OrderChannel(strct1, strct2)
 % strct2 is ordered based on order of channels in strct1
 
 if length(strct1) == 128 && any([strct1.chan] ~= [strct2.chan])
-    f = cellfun(@(x) strcmp(x, strct1(1).probe), {strct2.probe});
-    strct2tmp = strct2(f);
+    %f = cellfun(@(x) strcmp(x, strct1(1).probe), {strct2.probe});
+    strct2tmp = strct2(1:64);
     chanidx = [1:64; [strct1(1:64).chan]]';
     chanidx = sortrows(chanidx, 2);
     strct2tmpidx =[1:64; [strct2tmp(1:64).chan]]';
@@ -12,8 +12,8 @@ if length(strct1) == 128 && any([strct1.chan] ~= [strct2.chan])
     strct2tmpidx = sortrows(strct2tmpidx, 1);
     strct2tmp = strct2tmp(strct2tmpidx(:,2));
     
-    f = cellfun(@(x) strcmp(x, strct1(65).probe), {strct2.probe});
-    strct2(65:end) = strct2(f);
+    %f = cellfun(@(x) strcmp(x, strct1(65).probe), {strct2.probe});
+    strct2(65:end) = strct2(65:end);
     chanidx = [65:128; [strct1(65:end).chan]]';
     chanidx = sortrows(chanidx, 2);
     strct2idx =[65:128; [strct2(65:end).chan]]';
