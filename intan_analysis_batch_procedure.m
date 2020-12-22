@@ -12,7 +12,7 @@
 
 probtype = {'H31x64', 'H22x32'};
 %probtype = {'H31x64'};
-stimuli = {'dmr', 'dmrrep', 'fra10', 'fra'};
+stimuli = {'dmrrep'};%{'dmr', 'dmrrep', 'fra10', 'fra'};
 %stimuli = {'dmr'};
 flag_plot = 1;
 flag_saveplot = 0;
@@ -23,7 +23,7 @@ savepath = 'E:\Congcong\Documents\emsemble_thalamus\figure\multiunit';
 % STRF =  STA*#spike/pp/T; plot rfsig
 % dmrrep: 2ms bin
 % fra: smooth[2 2]
-for session = 18:length(sessions)
+for session = 1:length(sessions)
     datafolder = ['E:\Congcong\Documents\emsemble_thalamus\', sessions(session).name];
     figpath = ['E:\Congcong\Documents\emsemble_thalamus\figure\multiunit\', sessions(session).name];
     if ~exist(figpath, 'dir')
