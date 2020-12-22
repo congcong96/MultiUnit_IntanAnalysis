@@ -17,14 +17,8 @@ function [BF, BW_max, BW_min, Latency,Q, tw, confirm] = calc_bf_bw_latency(filte
 if nargin < 4
     manual = 0;
     bw_crit = 0.37; % to make the width of the distribution at 1/e of the peak height (or 0.75, Atencio et al. 2012)
-end
-
-if manual
-    imagesc(filter)
-    colormap jet
-    clim = max(abs(filter(:)));
-    caxis([-clim clim]);
-    axis xy
+elseif nargin < 5
+     bw_crit = 0.37;
 end
 
 % peakstim = max(max(abs(filter(:, 101:301))));
@@ -95,7 +89,12 @@ end
 Q = BF/ (BW_max-BW_min);
 
 if manual
-    hold on
+    imagesc(filter)
+    colormap jet
+    clim = max(abs(filter(:)));
+    caxis([-clim clim]);
+    axis xy
+     hold on
     idxLatency = round(idxLatency/1000*size(filter,2));
     idxBF = round(idxBF/1000*size(filter,1));
     
@@ -103,9 +102,6 @@ if manual
     plot([1 size(filter,2)], [fidx1d fidx1d], 'k-');%lower bound of BW
     plot([1 size(filter,2)], [fidx2d fidx2d], 'k-');%upper bounf for BW
     plot([idxLatency idxLatency], [1 idxBF],'k-');
-end
-
-if manual
     confirm = input('\nAcceptance confirm? 1=yes, 0=no: ');
 else
     confirm = NaN;
@@ -148,7 +144,8 @@ end
 
 function  [confirm, BF, BW_max, BW_min, Latency, Q, tw] = rejection(manual)
     if manual 
-        confirm = input('\nrejection confirm? 1=yes, 0=no: ');
+        confirm = 1;
+        %confirm = input('\nrejection confirm? 1=yes, 0=no: ');
     else
         confirm = NaN;
     end
