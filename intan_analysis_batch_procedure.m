@@ -12,12 +12,13 @@
 
 probtype = {'H31x64', 'H22x32'};
 %probtype = {'H31x64'};
-stimuli = {'dmr', 'dmrrep', 'fra10', 'fra'};
+stimuli = {'dmrrep'};%{'dmr', 'dmrrep', 'fra10', 'fra'};
 %stimuli = {'dmr'};
 flag_plot = 1;
 flag_saveplot = 0;
 
 sessions = dir('E:\Congcong\Documents\emsemble_thalamus\*CH');
+savepath = 'E:\Congcong\Documents\emsemble_thalamus\figure\multiunit';
 %% data processing for each session
 % STRF =  STA*#spike/pp/T; plot rfsig
 % dmrrep: 2ms bin

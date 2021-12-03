@@ -6,7 +6,11 @@ fra10stim = 'freq_resp_area_stimulus_flo500Hz_fhi32000Hz_nfreq21_natten8_nreps10
 fra10params = load(fullfile(stimfolder,fra10stim));
 
 %% FRA10 properties (used later for MGB subnucleus categorization)
+<<<<<<< HEAD
 for ii = 1:length(sessions)
+=======
+for ii = 18:length(sessions)
+>>>>>>> 3919e44a1bc045d3a781b69b9806350b2623d932
     sessionfolder = fullfile(sessions(ii).folder, sessions(ii).name);
     cd(sessionfolder)
     
@@ -73,7 +77,11 @@ end
 % reliability index calculated on banshee
 p = 0.002;
 mdb = 40;
+<<<<<<< HEAD
 for ii = 1:length(sessions)
+=======
+for ii = 1%:length(sessions)
+>>>>>>> 3919e44a1bc045d3a781b69b9806350b2623d932
     sessionfolder = fullfile(sessions(ii).folder, sessions(ii).name);
     cd(sessionfolder)
     
@@ -95,12 +103,18 @@ for ii = 1:length(sessions)
         taxis = strf(1).taxis;
         faxis = strf(1).faxis;
         strfproperties = [];
+        
+        
         for kk = 1:length(strf)
             rf = strf(kk).rfcontra;
             n0 = strf(kk).n0contra;
             rfsig = significant_strf(rf, p, n0, mdb, dur);
+<<<<<<< HEAD
             rfsig = rfsig;
             [BF, BW_max, BW_min, Latency, Q, tw, confirm] = calc_bf_bw_latency(rfsig,taxis,faxis);
+=======
+            [BF, BW_max, BW_min, Latency, Q, tw] = calc_bf_bw_latency(rfsig,taxis,faxis, 'manual', 1, 'rfraw', rf);
+>>>>>>> 3919e44a1bc045d3a781b69b9806350b2623d932
             strfproperties(kk).chan = strf(kk).chan;
             %strfproperties(kk).probe = strf(kk).probe;
             strfproperties(kk).BF = BF;
@@ -108,7 +122,6 @@ for ii = 1:length(sessions)
             strfproperties(kk).BW = [BW_min, BW_max];
             strfproperties(kk).Q = Q;
             strfproperties(kk).tw = tw;
-            strfproperties(kk).confirm = confirm;
         end
         
         if isfield(strf, 'probe')
@@ -119,6 +132,7 @@ for ii = 1:length(sessions)
         rtf = strf_parameters(strf, dur);
 
         save(fullfile(dmrfile.folder, dmrfile.name),'strf', 'rtf', 'strfproperties', '-append');
+
     end
 end
 
@@ -213,22 +227,32 @@ for ii = 1:length(sessions)
             yticklabels([0.5 1 2 4 8 16 32])
             ylabel('kHz')
             
-            if ~isnan(strfproperties(kk).BF)
+            if any(~isnan(strfproperties(kk).BF))
                 hold on
-                latency = strfproperties(kk).Latency;
-                idxLatency = find(taxis>latency/1000, 1);
-                BF =  strfproperties(kk).BF;
-                idxBF = find(faxis>=BF*1000, 1);
-                BW = strfproperties(kk).BW;
-                fidx1d = find(faxis>=BW(1)*1000, 1);
-                fidx2d =  find(faxis>=BW(2)*1000, 1);
-                
-                plot([1 idxLatency], [idxBF idxBF], 'k-');%draw the ling for BF
-                plot([1 size(rfsig,2)], [fidx1d fidx1d], 'k--');%lower bound of BW
-                plot([1 size(rfsig,2)], [fidx2d fidx2d], 'k--');%upper bounf for BW
-                plot([idxLatency idxLatency], [1 idxBF],'k-');
-                
-                title(sprintf('%.0fms %.1fkHz [%.1f, %.1f]',latency, BF, BW(1), BW(2)))
+                for mm = 1:length(strfproperties(kk).BF)
+                    if isnan(strfproperties(kk).BF(mm))
+                        continue
+                    end
+                    latency = strfproperties(kk).Latency(mm);
+                    idxLatency = find(taxis>latency/1000, 1);
+                    BF =  strfproperties(kk).BF(mm);
+                    idxBF = find(faxis>=BF*1000, 1);
+                    BW = strfproperties(kk).BW([mm*2-1, mm*2]);
+                    fidx2d =  find(faxis>=BW(2)*1000, 1);
+                    fidx1d = find(faxis>=BW(1)*1000, 1);
+                    
+                    plot([1 idxLatency], [idxBF idxBF], 'k-');%draw the line for BF
+                    plot([idxLatency idxLatency], [1 idxBF],'k-');
+                    if isempty(fidx2d) || isempty(fidx1d)
+                        continue
+                    end
+                    plot([1 size(rfsig,2)], [fidx1d fidx1d], 'k--');%lower bound of BW
+                    plot([1 size(rfsig,2)], [fidx2d fidx2d], 'k--');%upper boun for BW
+                    
+                   
+                    
+                    %title(sprintf('%.0fms %.1fkHz [%.1f, %.1f]',latency, BF, BW(1), BW(2)))
+                end
             end
             
             

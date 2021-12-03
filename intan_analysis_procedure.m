@@ -107,16 +107,16 @@ for ii = 1:length(probtype)
     elseif flag_plot == 1 && strcmp(stimuli,'dmr')
         
         savename = sprintf('%s-site%d-%dum-%s-dmr-strf', thresh(1).exp, thresh(1).site,thresh(1).depth, thresh(1).atten);
-        figpath = fullfile(figpath, savename);
-        plot_strf_NH(strf(idxthresh), trigger, probinfo, thresh(1).depth, figpath)
+        figsavepath = fullfile(figpath, savename);
+        plot_strf_NH(strf(idxthresh), trigger, probinfo, thresh(1).depth, figsavepath)
         thresh = threshorig;
         
     elseif flag_plot == 1 && strcmp(stimuli,'dmrrep')
         
         savename = sprintf('%s-site%d-%dum-%s-dmrrep-raster', thresh(1).exp, thresh(1).site,thresh(1).depth, thresh(1).atten);
-        figpath = fullfile(figpath, savename);
+        figsavepath = fullfile(figpath, savename);
         raster_tmp = raster(idxthresh);%binsize 2ms
-        plot_raster_mu(raster_tmp, probinfo, thresh(1).depth, figpath);
+        plot_raster_mu(raster_tmp, probinfo, thresh(1).depth, figsavepath);
         thresh = threshorig;
      end
 end

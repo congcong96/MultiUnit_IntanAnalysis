@@ -48,11 +48,19 @@ sm = str2double(envfile(i2(end)-1));
 tm = str2double(envfile(i3(end)-2:i3(end)-1));
 mdb = str2double(envfile(i4(end)-2:i4(end)-1));
 
-atten = spk.atten;
+if isfield(spk, 'atten')
+    atten = spk.atten;
+else
+    atten = 0;
+end
 if ischar(atten)
     atten = str2double(atten(1:end-2));
 end
-fs = double(spk(1).fs);
+if isfield(spk, 'fs')
+    fs = double(spk(1).fs);
+else
+    fs = 20000;
+end
 spl = 105 - atten;
 
 if iscell(spk(1).stim)

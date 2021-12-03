@@ -26,7 +26,7 @@ function [sig, RI, z, strfcorr, nstrfcorr] = calc_strf_RI(stimulus, spk, trigger
 % RELIABILITY INDEX OF STRF
 
 if nargin == 3
-    niter = 1000;
+    niter = 100;
 end
 stimstart = trigger(1)/20;
 stimend = (trigger(end)+trigger(2)-trigger(1))/20;

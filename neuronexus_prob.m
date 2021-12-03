@@ -45,7 +45,7 @@ if ( sum( ismember([{'Poly1'},{'poly1'}], probtype) ) )
     model = 'A1x32-6mm-50-177-A32';
 elseif ( sum( ismember([{'Poly2'},{'poly2'}], probtype) ) )
     model = 'A1x32-Poly2-5mm-50s-177-A32';
-elseif ( sum( ismember([{'Poly3'},{'poly3'}], probtype) ) )
+elseif ( sum( ismember([{'Poly3'},{'poly3'}, {'poly31x32'}], probtype) ) )
     model = 'A1x32-Poly3-6mm-50s-177-A32';
 elseif ( sum( ismember([{'LLNL'},{'llnl'}], probtype) ) )
     model = 'Livermore-32Ch-Rat';
@@ -53,14 +53,20 @@ elseif ( sum( ismember([{'H3'},{'H31'},{'H31x64'}], probtype) ) )
     model = 'H31x64';
 elseif (ismember({'ECoG64B'}, probtype))
     model = 'ASSY-156-ECoG-64B';
-elseif sum(ismember( {'H22x32'}, probtype))%H2 connected with neuronexus adaptor
+elseif sum(ismember( {'H22x32', 'H2'}, probtype))%H2 connected with neuronexus adaptor
     model = 'ASSY-77-H2';
-elseif sum(ismember({'Tetrode1x64'}, probtype))
+elseif sum(ismember({'Tetrode1x64', 'Tetrode64'}, probtype))
     model = 'A4x4-tet';
 elseif sum(ismember( {'smH22x32'}, probtype))%H2 connected with cambridge adaptor
     model = 'ASSY-77-H2-cambridge';
 elseif sum(ismember({'poly21x48'}, probtype))
     model = 'A1x48-Poly2-5mm-100s-177';
+elseif sum(ismember({'TetrodeB1x64'}, probtype))
+    model = 'A4x4-tetB';
+elseif sum(ismember({'Atlas1x16'}, probtype))
+    model = 'Atlas1x16';
+elseif sum(ismember({'smH2B2x32'}, probtype))
+    model = 'ASSY-77-H2-cambridgeB';
 else
     error('This type of prob is not registerd. (Choose from Poly1, Poly2, Poly3, LLNL or H31x64)');
 end
@@ -119,7 +125,12 @@ elseif strcmp(model, 'ASSY-77-H2-cambridge')
     IdxModel = 9;
 elseif strcmp(model, 'A1x48-Poly2-5mm-100s-177')
     IdxModel = 10;
-    
+elseif strcmp(model, 'A4x4-tetB')
+    IdxModel = 11;
+elseif strcmp(model, 'Atlas1x16')
+    IdxModel = 12;
+elseif strcmp(model,  'ASSY-77-H2-cambridgeB')
+    IdxModel = 13;
 end
 
 probmat = ElectrodePositions(IdxModel).probmat;
@@ -204,7 +215,7 @@ end
 
 
 
-% A4x4-tet
+%% A4x4-tet
 % load('/home/conghu/MatlabCodes/MultiUnit_IntanAnalysis/ElectrodePositions.mat', 'ElectrodePositions')
 % ElectrodePositions(8).model = 'A4x4-tet';
 % intanin = [30 31 28 29 26:-2:16   27:-2:17    37:2:47     32:36 38:2:46;
@@ -252,13 +263,54 @@ end
 % probmap = sortrows(probmap, 2);
 % ElectrodePositions(10).probmat = probmap;
 % save('/home/conghu/MatlabCodes/MultiUnit_IntanAnalysis/ElectrodePositions.mat', 'ElectrodePositions')
+%% A4x4-tetB
+%% ch16
+% load('/home/conghu/MatlabCodes/MultiUnit_IntanAnalysis/ElectrodePositions.mat', 'ElectrodePositions')
+% ElectrodePositions(12).model = 'Atlas1x16';
+% positiony = (0:150:2250)';
+% positionx = zeros(16,1);
+% probenum = (1:16)';
+% intannum = [9 1 11 3 10 2 12 4 13 5 14 6 15 7 16 8]';
+% probmap = [positiony, (1:16)', probenum, intannum, positionx];
+% ElectrodePositions(12).probmat = probmap;
+% save('/home/conghu/MatlabCodes/MultiUnit_IntanAnalysis/ElectrodePositions.mat', 'ElectrodePositions')
+%% smH22x32
+% ASSY-77-H2
+% load('/home/conghu/MatlabCodes/MultiUnit_IntanAnalysis/ElectrodePositions.mat', 'ElectrodePositions')
+% intanin = [ 32:36 38:2:46    37:2:47     27:-2:17          30 31 28 29 26:-2:16 ;
+%            62 63 60 61 58:-2:48         59:-2:49      5:2:15      0:4 6:2:14  ];
+% probeout = [1:5, 7:2:15, 6:2:16, 59:-2:49, 64:-1:60, 58:-2:50;
+%              17:21, 23:27, 22, 28, 32, 29, 30, 31, 43, 37, 33, 36, 35, 34, 48:-1:44, 42:-1:38];
+% probe2intan = [probeout(:), intanin(:)];
+% probe2intan = sortrows(probe2intan);
+% 
+% probe = [21, 23, 24, 30, 29, 16, 18, 20, 27, 19, 17, 25, 26, 32, 28, 22, 1, 3, 5, 7, 9, 11, 13, 15, 31, 14, 12, 10, 8, 6, 4, 2
+%          64, 62, 60, 58, 56, 54, 52, 50, 34, 51, 53, 55, 57, 59, 61, 63, 44, 42, 41, 35, 36, 49, 47, 45, 38, 46, 48, 40, 39, 33, 37, 43];
+% probe = probe';
+% probe2position = [probe(:), 25*31-[0:25:25*31 0:25:25*31]', [zeros(32,1); 250*ones(32, 1)], (1:64)'];
+% probe2position = sortrows(probe2position);
+% 
+% probmat = [probe2position(:,2),probe2position(:,4) , probe2position(:,1), probe2intan(:,2), probe2position(:,3)];
+% probmat = sortrows(probmat, 2);
+% ElectrodePositions(9).probmat = probmat;
+% save('/home/conghu/MatlabCodes/MultiUnit_IntanAnalysis/ElectrodePositions.mat', 'ElectrodePositions')
+%% smH2B2x32
+% ElectrodePositions(13).model =  'ASSY-77-H2-cambridgeB';
+% probemat = ElectrodePositions(9).probmat;
+% intan1 = [46:-2:16 47:-2:17 49:2:63 1:2:15 48:2:62 0:2:14];
+% intan = [intan1; flip(intan1)]';
+% intan = sortrows(intan);
+% probemat = sortrows(probemat, 4);
+% probemat(:,4) = intan(:,2);
+% probemat = sortrows(probemat, 2);
+% ElectrodePositions(13).probmat=  probemat;
 
 %% to check wiring for LLNL probe
 %
 % A32 = [31 29 27 25 23 21 19 17 15 13 11 9 7 5 3 1 32 30 28 26 24 22 20 18 16 14 12 10 8 6 4 2];
 % OM32s = [30 32 26 28 22 24 18 20 14 16 10 12 6 8 2 4; 29 31 25 27 21 23 17 19 13 15 9 11 5 7 1 3];
 % Intans = [7 6 5 4 3 2 1 0 31 30 29 28 27 26 25 24; 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23];
-% 
+%
 % OM32toIntan = [OM32s(:) Intans(:)];
 % 
 % Intan = NaN(size(A32));
